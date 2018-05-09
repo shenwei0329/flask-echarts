@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <script src="http://oog4yfyu0.bkt.clouddn.com/echarts.min.js"></script>
+    <script src="http://oog4yfyu0.bkt.clouddn.com/echarts-gl.js"></script>
+    <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+    <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+    <script type="text/javascript " src="http://oog4yfyu0.bkt.clouddn.com/wordcloud.js"></script>
+</head>
+
+<body>
+    <div><h1>项目综合</h1>
+        {{ mybarechart | safe }}
+    </div>
+    <div><h1>资源综合</h1>
+        {{ myechart | safe }}
+    </div>
+    <div><h1>考勤综合</h1></div>
+    <div><h1>出差综合</h1>
+        {{ mygeo | safe }}
+    </div>
+</body>
+
+</html>
+
