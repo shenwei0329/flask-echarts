@@ -1,92 +1,114 @@
 #coding=utf-8
 from __future__ import unicode_literals
 
-from pyecharts import Page
-from pyecharts import Geo
-import mongodb_class
 from flask import Flask, render_template
+import echart_handler
+import handler
+import pandas as pd
+import datetime
 
-mongo_db = mongodb_class.mongoDB('ext_system')
 app = Flask(__name__)
+
+import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(level = logging.INFO)
+_handler = logging.FileHandler("log.txt")
+_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+_handler.setFormatter(formatter)
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+
+logger.addHandler(_handler)
+logger.addHandler(console)
+
+databases = ['CPSJ', 'FAST', 'HUBBLE', 'ROOOOT', 'RDM', 'TESTCENTER', 'JX', 'GZ']
 
 @app.route("/")
 def hello():
-    return render_template('pyecharts.html', myechart=scatter3d(), mybarechart=bar(), mygeo=get_geo())
 
+    # 项目统计信息
+    pjStat = {
+        "total": 80,
+        "done": 21,
+        "ing": 18,
+        "pre": 41,
+    }
 
-def get_geo():
+    # 产品统计信息
+    pdStat = {
+        "total": 80,
+        "ing": 18,
+    }
 
-    data = []
-    addr_data = {}
+    # 资源统计信息
+    hrStat = {
+        "total": 80,
+        "done": 2000,
+        "ratio": 80,
+    }
 
-    _rec = mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差'})
-    for _r in _rec:
-        _addr = _r['起止地点'].split(u'到')
-        if len(_addr) == 1:
-            _addr = _r['起止地点'].split(' ')
-        if len(_addr) == 1:
-            _addr = _r['起止地点'].split('-')
-        if len(_addr) == 1:
-            _addr = _r['起止地点'].split('_')
-        if len(_addr) == 1:
-            _addr = _r['起止地点'].split('～')
-        if len(_addr) == 1:
-            _addr = _r['起止地点'].split('至')
-        if len(_addr) == 1:
-            if _addr[0] == u'上海嘉兴':
-                _addr = [u"上海", u"嘉兴"]
+    count, done_count, persion, date, cost = handler.get_task_stat()
+    _persion = []
+    _date = []
+    _persion_max = 0
+    for _p in persion:
+        _val = persion[_p]
+        if _val > _persion_max:
+            _persion_max = _val
+        _persion.append(_val)
 
-        for __addr in _addr:
+    _today = datetime.date.today()
+    _date_scale = pd.date_range(start='2018-01-01 00:00:00',
+                                end='%s-%s-%s 23:59:59' % (_today.year, _today.month, _today.day),
+                                freq='1D')
+    pydate_array = _date_scale.to_pydatetime()
+    date_only_array = np.vectorize(lambda s: s.strftime('%Y-%m-%d'))(pydate_array)
+    _date_scale = pd.Series(date_only_array)
 
-            __addr = __addr.replace(' ', '')
+    _date = []
+    for _d in _date_scale:
+        if _d in date:
+            _date.append(date[_d])
+        else:
+            _date.append(0)
 
-            if __addr not in addr_data:
-                addr_data[__addr] = 1
-            else:
-                addr_data[__addr] += 1
+    # 任务统计
+    taskStat = {
+        "total": count,
+        "done": done_count,
+        "cost": cost,
+        "ratio": "%0.2f" % (float(done_count*100)/float(count)),
+    }
 
-    for _data in addr_data:
-        if u'四川省厅' in _data:
-            continue
-        data.append((_data, addr_data[_data]),)
+    _cost_loan = handler.get_loan_stat()
+    _cost_ticket = handler.get_ticket_stat()
+    # 差旅统计信息
+    tripStat = {
+        "total": handler.get_trip_count(),
+        "loan": "%0.3f" % (_cost_loan/10000.),
+        "ticket": "%0.3f" % (_cost_ticket/ 10000.),
+        "totalcost": "%0.3f" % ((_cost_loan+_cost_ticket)/10000.)
+    }
 
-    print data
+    context = dict(
+        pjStat=pjStat,
+        pdStat=pdStat,
+        hrStat=hrStat,
+        taskStat=taskStat,
+        tripStat=tripStat,
+        myechart=echart_handler.scatter3d(),
+        mybarechart=echart_handler.bar(),
+        mygeo=echart_handler.get_geo(),
+        persionTask=echart_handler.scatter(u'【人-任务】分布', [0, _persion_max/2], _persion),
+        dateTask=echart_handler.scatter(u'【日期-任务】分布', [0, _persion_max/2], _date),
+        chkonam=echart_handler.scatter(u'上班时间分布', [0,12], handler.getChkOnAm('2018-04-01', '2018-04-30')),
+        chkonpm=echart_handler.scatter(u'下班时间分布', [8,24], handler.getChkOnPm('2018-04-01', '2018-04-30')),
+    )
 
-    geo = Geo("出差情况", "数据来自出差申请",
-             title_color="#fff",
-             title_pos="center",
-             width=1200,
-             height=600,
-             background_color='#404a59')
+    return render_template('pyecharts.html', **context)
 
-    attr, value = geo.cast(data)
-
-    geo.add("", attr, value, visual_range=[0, 10], visual_text_color="#fff", symbol_size=15, is_visualmap=True)
-    # geo.show_config()
-    return geo.render_embed()
-
-
-def bar():
-    from pyecharts import Bar
-
-    # bar
-    attr = ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"]
-    v1 = [5, 20, 36, 10, 75, 90]
-    v2 = [10, 25, 8, 60, 20, 80]
-    bar = Bar("柱状图数据堆叠示例")
-    bar.add("商家A", attr, v1, is_stack=True)
-    bar.add("商家B", attr, v2, is_stack=True)
-    return bar.render_embed()
-
-
-def scatter3d():
-    from pyecharts import Scatter3D
-
-    import random
-    data = [[random.randint(0, 100), random.randint(0, 100), random.randint(0, 100)] for _ in range(80)]
-    range_color = ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf',
-                   '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-    scatter3D = Scatter3D("3D scattering plot demo", width=1200, height=600)
-    scatter3D.add("", data, is_visualmap=True, visual_range_color=range_color)
-    return scatter3D.render_embed()
 

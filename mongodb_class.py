@@ -24,8 +24,8 @@ class mongoDB:
         # self.mongo_client = MongoClient(host=['10.111.135.2:27017'])
         uri = 'mongodb://root:chinacloud@172.16.60.2:27017/admin'
         self.mongo_client = MongoClient(uri)
+        self.mongo_db = None
         # self.mongo_db = self.mongo_client.FAST
-        self.mongo_db = self.mongo_client.get_database(project)
         """
         2018.4.8：不再采用这种方法，不灵活。
         
@@ -45,6 +45,12 @@ class mongoDB:
                        "find_with_sort": self._find_with_sort,
                        "find_one": self._find_one,
                        "remove": self._remove}
+
+    def connect_db(self, database):
+        self.mongo_db = self.mongo_client.get_database(database)
+
+    def close_db(self):
+        self.mongo_client.close()
 
     @staticmethod
     def _insert(obj, *data):
@@ -96,6 +102,8 @@ class mongoDB:
         :return:
         """
         # return self.pj_hdr[operation](self.obj[obj], *data)
+        if self.mongo_db is None:
+            return None
         return self.pj_hdr[operation](self.mongo_db[obj], *data)
 
     def get_count(self, obj, *data):

@@ -1,28 +1,171 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <meta charset="utf-8">
-    <title>ECharts</title>
-    <script src="http://oog4yfyu0.bkt.clouddn.com/echarts.min.js"></script>
-    <script src="http://oog4yfyu0.bkt.clouddn.com/echarts-gl.js"></script>
-    <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
-    <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
-    <script type="text/javascript " src="http://oog4yfyu0.bkt.clouddn.com/wordcloud.js"></script>
-</head>
+    <head>
+        <meta charset="utf-8">
+        <title>华云-研发管理信息系统</title>
+        <script src="http://oog4yfyu0.bkt.clouddn.com/echarts.min.js"></script>
+        <script src="http://oog4yfyu0.bkt.clouddn.com/echarts-gl.js"></script>
+        <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+        <script type="text/javascript " src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+        <script type="text/javascript " src="http://oog4yfyu0.bkt.clouddn.com/wordcloud.js"></script>
+    </head>
 
-<body>
-    <div><h1>项目综合</h1>
-        {{ mybarechart | safe }}
-    </div>
-    <div><h1>资源综合</h1>
-        {{ myechart | safe }}
-    </div>
-    <div><h1>考勤综合</h1></div>
-    <div><h1>出差综合</h1>
-        {{ mygeo | safe }}
-    </div>
-</body>
+    <style type="text/css">
+        div-center { text-align:center; }
+        #wrap {
+            margin-left:auto;
+            margin-right:auto;
+            text-align:center;
+            width:80%;
+            position:relative;
+        }
+        #subwrap {
+            width: 100%;
+            float: center;
+        }
+        div {
+            #left, #middle, #right {
+                float: left;
+                width: 33%;
+        }
+        p-sw { color:rgb(80%,10%,10%); }
+    </style>
+
+    <body>
+        <div class="head" id="A1">
+            <div-center><h1><span><b>信息总览</b></span></h1></div-center>
+            <div class="list">
+                <ul>
+                    <li>
+                        <h2>项目综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="300px">
+                                    <h3>项目总数：<b style="color:#F00">{{ pjStat["total"] }}</b></h3>
+                                </th>
+                                <th width="300px">
+                                    <h4>交付：<b>{{ pjStat["done"] }}</b></h4>
+                                </th>
+                                <th width="300px">
+                                    <h4>在建：<b>{{ pjStat["ing"] }}</b></h4>
+                                </th>
+                                <th width="300px">
+                                    <h4>跟踪：<b>{{ pjStat["pre"] }}</b></h4>
+                                </th>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <h2>产品综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="300px">
+                                    <h3>货架产品总数：<b style="color:#F00">{{ pdStat["total"] }}</b></h3>
+                                </th>
+                                <th width="300px">
+                                    <h4>在研：<b>{{ pdStat["ing"] }}</b></h4>
+                                </th>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <h2>资源综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="300px">
+                                    <h3>人员总数：<b style="color:#F00">{{ hrStat["total"] }}（人）</b></h3>
+                                </th>
+                                <th width="300px">
+                                    <h4>完成工时：<b>{{ hrStat["done"] }}（人时）</b></h4>
+                                </th>
+                                <th width="300px">
+                                    <h4>工作效率：<b>{{ hrStat['ratio'] }}%</b></h4>
+                                    <h5>注：指资源的有效工作时间占比</h5>
+                                </th>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <h2>任务综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="200px">
+                                    <h3>任务数：<b style="color:#F00">{{ taskStat["total"] }}（个）</b></h3>
+                                </th>
+                                <th width="200px">
+                                    <h4>已完成：<b>{{ taskStat["done"] }}（个）</b></h4>
+                                </th>
+                                <th width="200px">
+                                    <h4>成本：<b>{{ taskStat["cost"] }}（工时）</b></h4>
+                                </th>
+                                <th width="200px">
+                                    <h4>完成率：<b>{{ taskStat['ratio'] }}%</b></h4>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td width="200px">
+                                </td>
+                                <td width="200px">
+                                    {{ persionTask | safe }}
+                                </td>
+                                <td width="200px">
+                                    {{ dateTask | safe }}
+                                </td>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <h2>差旅综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="300px">
+                                    <h3>差旅总数：<b style="color:#F00">{{ tripStat["total"] }}（人次）</b></h3>
+                                    <h3>总费用：<b style="color:#F00">{{ tripStat["totalcost"] }}（万元）</b></h3>
+                                </th>
+                                <th width="300px">
+                                    <h4>差旅费（借款）：<b>{{ tripStat["loan"] }}（万元）</b></h4>
+                                </th>
+                                <th width="300px">
+                                    <h4>机票费：<b>{{ tripStat["ticket"] }}（万元）</b></h4>
+                                </th>
+                            </tr>
+                            <tr>
+                                <td width="300px">
+                                </td>
+                                <td width="300px">
+                                    {{ mygeo | safe }}
+                                </td>
+                                <td width="300px">
+                                </td>
+                            </tr>
+                        </table>
+                    </li>
+                    <li>
+                        <h2>考勤综合</h2>
+                        <hr>
+                        <table>
+                            <tr>
+                                <th width="300px">
+                                    {{ chkonam | safe }}
+                                </th>
+                                <th width="300px">
+                                    {{ chkonpm | safe }}
+                                </th>
+                            </tr>
+                        </table>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div id="wrap">
+            <div id="subwrap"><b>版权：</b>中电科华云信息技术有限公司</div>
+        </div>
+    </body>
 
 </html>
-
