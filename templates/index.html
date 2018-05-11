@@ -34,14 +34,17 @@
 
     <body>
         <div class="head" id="A1">
-            <div-center><h1><span><b>信息总览</b></span></h1></div-center>
+            <div style="text-align:center">
+                <h1><b>信息总览</b></h1>
+                <h7>数据期间：2018年1月1日 至今</h7>
+            </div>
             <div class="list">
                 <ul>
                     <li>
                         <h2>项目综合</h2>
                         <hr>
                         <table>
-                            <tr>
+                            <tr style="text-align:left">
                                 <th width="300px">
                                     <h3>项目总数：<b style="color:#F00">{{ pjStat["total"] }}</b></h3>
                                 </th>
@@ -75,16 +78,24 @@
                         <h2>资源综合</h2>
                         <hr>
                         <table>
-                            <tr>
-                                <th width="300px">
-                                    <h3>人员总数：<b style="color:#F00">{{ hrStat["total"] }}（人）</b></h3>
+                            <tr style="text-align:left">
+                                <th width="20px">
                                 </th>
                                 <th width="300px">
-                                    <h4>完成工时：<b>{{ hrStat["done"] }}（人时）</b></h4>
+                                    <h3>在册人数：<b style="color:#F00">{{ taskStat["persion_count"] }}</b>（人）</h3>
                                 </th>
                                 <th width="300px">
-                                    <h4>工作效率：<b>{{ hrStat['ratio'] }}%</b></h4>
-                                    <h5>注：指资源的有效工作时间占比</h5>
+                                    <h4>占比：<b>{{ taskStat["persion_ratio"] }}</b>%</h4>
+                                    <h5>注：指注册人数占公司在岗人数的比例。</h5>
+                                </th>
+                                <th width="300px">
+                                    <h4>耗时：<b>{{ hrStat["cost_time"] }}</b>（工时）</h4>
+                                    <h4>成本预估：<b style="color:#F00">{{ hrStat["cost"] }}</b>（万元）</h4>
+                                    <h5>注：按人均每月{{ taskStat["cost_base"] }}（万元）计</h5>
+                                </th>
+                                <th width="300px">
+                                    <h4>工作效率：<b>{{ hrStat['ratio'] }}</b>%</h4>
+                                    <h5>注：工作效率 = 任务耗时 / 人员耗时 </h5>
                                 </th>
                             </tr>
                         </table>
@@ -93,29 +104,39 @@
                         <h2>任务综合</h2>
                         <hr>
                         <table>
-                            <tr>
-                                <th width="200px">
-                                    <h3>任务数：<b style="color:#F00">{{ taskStat["total"] }}（个）</b></h3>
+                            <tr style="text-align:left">
+                                <th width="20px">
                                 </th>
-                                <th width="200px">
-                                    <h4>已完成：<b>{{ taskStat["done"] }}（个）</b></h4>
+                                <th width="300px">
+                                    <h3>任务：<b style="color:#F00">{{ taskStat["total"] }}</b>（个）</h3>
                                 </th>
-                                <th width="200px">
-                                    <h4>成本：<b>{{ taskStat["cost"] }}（工时）</b></h4>
+                                <th width="300px">
+                                    <h4>完成：<b>{{ taskStat["done"] }}</b>（个）</h4>
                                 </th>
-                                <th width="200px">
-                                    <h4>完成率：<b>{{ taskStat['ratio'] }}%</b></h4>
+                                <th width="400px">
+                                    <h4>耗时：<b>{{ taskStat["cost_time"] }}</b>（工时）</h4>
+                                    <h4>成本预估：<b style="color:#F00">{{ taskStat["cost"] }}</b>（万元）</h4>
+                                    <h5>注：按人均每月{{ taskStat["cost_base"] }}（万元）计</h5>
+                                </th>
+                                <th width="300px">
+                                    <h4>完成率：<b>{{ taskStat['ratio'] }}</b>%</h4>
                                 </th>
                             </tr>
+                        </table>
+                        <table>
                             <tr>
-                                <td width="200px">
-                                </td>
-                                <td width="200px">
+                                <th width="200px">
+
+                                </th>
+                                <th width="300px">
                                     {{ persionTask | safe }}
-                                </td>
-                                <td width="200px">
+                                </th>
+                                <th width="200px">
+
+                                </th>
+                                <th width="300px">
                                     {{ dateTask | safe }}
-                                </td>
+                                </th>
                             </tr>
                         </table>
                     </li>
@@ -123,25 +144,30 @@
                         <h2>差旅综合</h2>
                         <hr>
                         <table>
-                            <tr>
-                                <th width="300px">
-                                    <h3>差旅总数：<b style="color:#F00">{{ tripStat["total"] }}（人次）</b></h3>
-                                    <h3>总费用：<b style="color:#F00">{{ tripStat["totalcost"] }}（万元）</b></h3>
+                            <tr style="text-align:left">
+                                <th width="20px">
                                 </th>
                                 <th width="300px">
-                                    <h4>差旅费（借款）：<b>{{ tripStat["loan"] }}（万元）</b></h4>
+                                    <h3>差旅总数：<b style="color:#F00">{{ tripStat["total"] }}</b>（人次）</h3>
+                                    <h3>总费用：<b style="color:#F00">{{ tripStat["totalcost"] }}</b>（万元）</h3>
                                 </th>
                                 <th width="300px">
-                                    <h4>机票费：<b>{{ tripStat["ticket"] }}（万元）</b></h4>
+                                    <h4>差旅费（借款）：<b>{{ tripStat["loan"] }}</b>（万元）</h4>
+                                </th>
+                                <th width="300px">
+                                    <h4>机票费：<b>{{ tripStat["ticket"] }}</b>（万元）</h4>
                                 </th>
                             </tr>
                             <tr>
-                                <td width="300px">
+                                <td>
                                 </td>
-                                <td width="300px">
-                                    {{ mygeo | safe }}
+                                <td>
+                                    {{ trip | safe }}
                                 </td>
-                                <td width="300px">
+                                <td>
+                                    {{ planeTicket | safe }}
+                                </td>
+                                <td>
                                 </td>
                             </tr>
                         </table>
@@ -151,6 +177,9 @@
                         <hr>
                         <table>
                             <tr>
+                                <th width="300px">
+                                    <h4>到岗：<b style="color:#F00">{{ checkStat['total'] }}</b>（人）</h4>
+                                </th>
                                 <th width="300px">
                                     {{ chkonam | safe }}
                                 </th>

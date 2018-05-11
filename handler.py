@@ -13,13 +13,12 @@ import mongodb_class
 import MySQLdb
 import mysql_hdr
 
-mongo_db = mongodb_class.mongoDB('ext_system')
-
+mongo_db = mongodb_class.mongoDB()
 db = MySQLdb.connect(host="172.16.60.2", user="tk", passwd="53ZkAuoDVc8nsrVG", db="nebula", charset='utf8')
 mysql_db = mysql_hdr.SqlService(db)
 
 
-def get_trip_count():
+def get_trip_count(st_date, ed_date):
     """
     获取差旅记录个数
     :return:
@@ -29,9 +28,13 @@ def get_trip_count():
     mongo_db.connect_db('ext_system')
 
     # 从出差申请表中获取出差类型为：出差的数据
-    return mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差'}).count()
+    return mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差',
+                                                 "$and": [{"审批完成时间": {"$gte": "%s" % st_date}},
+                                                          {"审批完成时间": {"$lt": "%s" % ed_date}}]
+                                                 }).count()
 
-def get_trip_data():
+
+def get_trip_data(st_date, ed_date):
     """
     获取差旅数据，在地图上展示。
     :param mongo_db: 数据源
@@ -44,7 +47,9 @@ def get_trip_data():
     mongo_db.connect_db('ext_system')
 
     # 从出差申请表中获取出差类型为：出差的数据
-    _rec = mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差'})
+    _rec = mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差',
+                                                 "$and": [{"审批完成时间": {"$gte": "%s" % st_date}},
+                                                          {"审批完成时间": {"$lt": "%s" % ed_date}}]})
     for _r in _rec:
 
         # 清洗数据，获取出差地址
@@ -142,6 +147,28 @@ def calHour(_str):
         return ret
 
 
+def get_pj_state():
+
+    _pj_count = mysql_db.count('select count(*) from project_t')
+    _pj_done = mysql_db.count('select count(*) from project_t where PJ_XMZT like "%%运维%%"')
+    _pj_ing = mysql_db.count('select count(*) from project_t '
+                             'where PJ_XMZT like "%%已立项%%" '
+                             'or PJ_XMZT like "%%验收阶段%%" '
+                             'or PJ_XMZT like "%%在建%%" '
+                             'and PJ_XMBH not like "%%PRJ-%%" ')
+
+    return _pj_count, _pj_done, _pj_ing
+
+
+def get_pd_state():
+
+    _pd_count = mysql_db.count('select count(*) from product_t')
+    _pd_count += mysql_db.count('select count(*) from product_t where PD_LX like "%%发布%%"')
+    _pd_ing = mysql_db.count('select count(*) from product_t where PD_LX like "%%进入%%"')
+
+    return _pd_count, _pd_ing
+
+
 def getChkOnAm(st_date, ed_date):
     """
     获取员工上午到岗时间序列
@@ -149,11 +176,12 @@ def getChkOnAm(st_date, ed_date):
     :param ed_date: 结束时间
     :return: 到岗记录时间序列
     """
-    _sql = 'select KQ_AM from checkon_t' \
+    _sql = 'select KQ_AM, KQ_NAME from checkon_t' \
            ' where str_to_date(KQ_DATE,"%%y-%%m-%%d") between "%s" and "%s"' % (st_date, ed_date)
     _res = mysql_db.do(_sql)
 
     _seq = ()
+    _user = {}
     for _row in _res:
         if _row[0] == '#':
             continue
@@ -162,7 +190,11 @@ def getChkOnAm(st_date, ed_date):
             _seq = _seq + (9.0,)
         else:
             _seq = _seq + (_h,)
-    return _seq
+
+        if _row[1] not in _user:
+            _user[_row[1]] = 0
+        _user[_row[1]] += 1
+    return _seq, _user
 
 
 def getChkOnPm(st_date, ed_date):
@@ -194,7 +226,7 @@ def getChkOnPm(st_date, ed_date):
 pj_list = ['CPSJ', 'FAST', 'HUBBLE', 'GZ', 'JX', 'RDM', 'ROOOT', 'TESTCENTER']
 
 
-def get_task_stat():
+def get_task_stat(st_date, ed_date):
 
     _count = 0
     _done_count = 0
@@ -203,7 +235,9 @@ def get_task_stat():
     _cost = 0
     for pj in pj_list:
         mongo_db.connect_db(pj)
-        _rec = mongo_db.handler('issue', 'find', {"issue_type": u"任务"})
+        _rec = mongo_db.handler('issue', 'find', {"issue_type": u"任务",
+                                                  "$and": [{"created": {"$gte": "%s" % st_date}},
+                                                           {"created": {"$lt": "%s" % ed_date}}]})
         for _r in _rec:
             _count += 1
             if _r['status'] == u'完成':
@@ -223,11 +257,37 @@ def get_task_stat():
     return _count, _done_count, persion, date, _cost
 
 
-def get_loan_stat():
+def get_hr_stat(st_date, ed_date):
+
+    persion = {}
+    date = {}
+
+    for pj in pj_list:
+        mongo_db.connect_db(pj)
+        _rec = mongo_db.handler('worklog', 'find', {"$and": [{"created": {"$gte": "%s" % st_date}},
+                                                             {"created": {"$lt": "%s" % ed_date}}]})
+        for _r in _rec:
+            if 'author' not in _r:
+                continue
+            if _r['author'] not in persion:
+                persion[_r['author']] = 0
+            persion[_r['author']] += _r['timeSpentSeconds']
+            _date = _r['created'].split('T')[0]
+            if _date not in date:
+                date[_date] = 0
+            date[_date] += 1
+
+        mongo_db.close_db()
+
+    return persion, date
+
+
+def get_loan_stat(st_date, ed_date):
 
     mongo_db.connect_db('ext_system')
 
-    _rec = mongo_db.handler('loan_req', 'find', {})
+    _rec = mongo_db.handler('loan_req', 'find', {"$and": [{"审批完成时间": {"$gte": "%s" % st_date}},
+                                                          {"审批完成时间": {"$lt": "%s" % ed_date}}]})
     _cost = 0.
     for _r in _rec:
         _cost += float(_r[u'金额小计'])
@@ -235,14 +295,42 @@ def get_loan_stat():
     return _cost
 
 
-def get_ticket_stat():
+def get_ticket_stat(st_date, ed_date):
 
     mongo_db.connect_db('ext_system')
 
-    _rec = mongo_db.handler('plane_ticket', 'find', {})
+    _date = st_date.split('-')
+    _st_date = u"%d年%d月%d日" % (int(_date[0]), int(_date[1]), int(_date[2]))
+
+    _date = ed_date.split('-')
+    _ed_date = u"%d年%d月%d日" % (int(_date[0]), int(_date[1]), int(_date[2]))
+
+    _rec = mongo_db.handler('plane_ticket', 'find', {"$and": [{"起飞时间": {"$gte": "%s" % _st_date}},
+                                                              {"起飞时间": {"$lt": "%s" % _ed_date}}]})
     _cost = 0.
+    addr_data = {}
+
     for _r in _rec:
         _cost += float(_r[u'实收'])
 
-    return _cost
+        # 出差地址
+        _addr = _r[u'航程'].split('-')
+
+        for __addr in _addr:
+
+            # 去掉空格信息
+            if len(__addr) < 2:
+                continue
+
+            if __addr not in addr_data:
+                addr_data[__addr] = 1
+            else:
+                addr_data[__addr] += 1
+
+    # 关闭数据库
+    mongo_db.close_db()
+
+    return _cost, addr_data
+
+
 

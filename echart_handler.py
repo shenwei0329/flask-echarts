@@ -8,14 +8,12 @@
 #
 
 from __future__ import unicode_literals
-import handler
 
 
-def get_geo():
+def get_geo(title, sub_title, addr_data):
     from pyecharts import Geo
 
     data = []
-    addr_data = handler.get_trip_data()
 
     for _data in addr_data:
         if _data not in [u'上海', u'成都', u'西安', u'温州', u'南京', u'石家庄', u'嘉兴',
@@ -23,7 +21,8 @@ def get_geo():
                          u'合肥', u'南宁', u'杭州', u'贵阳', u'深圳', u'沈阳',
                          u'重庆', u'昆明', u'哈尔滨', u'天津', u'乌鲁木齐', u'拉萨',
                          u'海口', u'三亚', u'东莞', u'大理', u'葫芦岛', u'无锡', u'榆林',
-                         u'西昌', u'德阳']:
+                         u'西昌', u'德阳', u'长沙', u'锦州', u'秦皇岛', u'珠海', u'广州',
+                         u'太原', u'银川']:
             print _data,
             continue
         data.append((_data, addr_data[_data]),)
@@ -32,7 +31,7 @@ def get_geo():
 
     # print data
 
-    geo = Geo("出差情况", "数据来自出差申请",
+    geo = Geo(title, sub_title,
               title_color="#fff",
               title_pos="center",
               width=600,

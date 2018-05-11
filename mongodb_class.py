@@ -17,7 +17,7 @@ import datetime
 
 class mongoDB:
 
-    def __init__(self, project):
+    def __init__(self):
         self.sort = None
         # self.mongo_client = MongoClient(host=['172.16.101.117:27017'])
         # self.mongo_client = MongoClient(host=['localhost:27017'])
