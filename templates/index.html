@@ -43,149 +43,217 @@
                     <li>
                         <h2>项目综合</h2>
                         <hr>
-                        <table>
+                        <table border="2">
                             <tr style="text-align:left">
-                                <th width="300px">
-                                    <h3>项目总数：<b style="color:#F00">{{ pjStat["total"] }}</b></h3>
-                                </th>
-                                <th width="300px">
-                                    <h4>交付：<b>{{ pjStat["done"] }}</b></h4>
-                                </th>
-                                <th width="300px">
-                                    <h4>在建：<b>{{ pjStat["ing"] }}</b></h4>
-                                </th>
-                                <th width="300px">
-                                    <h4>跟踪：<b>{{ pjStat["pre"] }}</b></h4>
-                                </th>
+                                <th width="50px"></th>
+                                <th width="300px">项目总数</th>
+                                <th width="300px">进入运维</th>
+                                <th width="300px">已交付</th>
+                                <th width="300px">在建和验收中</th>
+                                <th width="300px">其它（含跟进和暂停等）</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b style="color:#F00">{{ pjStat["total"] }}</b></td>
+                                <td>{{ pjStat["op"] }}</td>
+                                <td>{{ pjStat["done"] }}</td>
+                                <td>{{ pjStat["ing"] }}</td>
+                                <td>{{ pjStat["pre"] }}</td>
                             </tr>
                         </table>
                     </li>
                     <li>
                         <h2>产品综合</h2>
                         <hr>
-                        <table>
+                        <table border="2">
+                            <tr style="text-align:left">
+                                <th width="50px"></th>
+                                <th width="300px">货架上的产品数</th>
+                                <th width="300px">研发过程中的</th>
+                            </tr>
                             <tr>
-                                <th width="300px">
-                                    <h3>货架产品总数：<b style="color:#F00">{{ pdStat["total"] }}</b></h3>
-                                </th>
-                                <th width="300px">
-                                    <h4>在研：<b>{{ pdStat["ing"] }}</b></h4>
-                                </th>
+                                <td></td>
+                                <td><b style="color:#F00">{{ pdStat["total"] }}</b></th>
+                                <td>{{ pdStat["ing"] }}</td>
                             </tr>
                         </table>
                     </li>
                     <li>
                         <h2>资源综合</h2>
                         <hr>
-                        <table>
+                        <div><h3>资源统计：</h3></div>
+                        <table border="2">
                             <tr style="text-align:left">
-                                <th width="20px">
+                                <th width="50px"></th>
+                                <th width="300px">在册人数（人）</th>
+                                <th width="300px">员工占比</th>
+                                <th width="300px">工作量（工时）</th>
+                                <th width="300px">工时成本（万元）</th>
+                                <th width="300px">效率</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{{ taskStat["persion_count"] }}</td>
+                                <td>{{ taskStat["persion_ratio"] }}%</td>
+                                <td style="text-align:right">{{ hrStat["cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ hrStat["cost"] }}</b></td>
+                                <td>{{ hrStat['ratio'] }}%</td>
+                            </tr>
+                        </table>
+                        <div><h3>资源明细：</h3></div>
+                        <table border="2">
+                            <tr style="text-align:left">
+                                <th width="50px"></th>
+                                <th width="300px">部门</th>
+                                <th width="300px">资源（人）</th>
+                                <th width="300px">任务（个）</th>
+                                <th width="300px">工作量（工时）</th>
+                                <th width="300px">工时成本（万元）</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b>产品部</b></td>
+                                <td>{{ taskStat["pd_persion"] }}</td>
+                                <td>{{ taskStat["pd_count"] }}</td>
+                                <td style="text-align:right">{{ taskStat["pd_cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ taskStat["pd_cost"] }}</b></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b>业务部门</b><br><a>资源范围：{{ taskStat["pj_group"] }}</a></td>
+                                <td>{{ taskStat["pj_persion"] }}</td>
+                                <td>{{ taskStat["pj_count"] }}</td>
+                                <td style="text-align:right">{{ taskStat["pj_cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ taskStat["pj_cost"] }}</b></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b>研发管理与测试部</b></td>
+                                <td>{{ taskStat["rdm_persion"] }}</td>
+                                <td>{{ taskStat["rdm_count"] }}</td>
+                                <td style="text-align:right">{{ taskStat["rdm_cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ taskStat["rdm_cost"] }}</b></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b>总计</b></td>
+                                <td>{{ taskStat["persion_total"] }}</td>
+                                <td>{{ taskStat["count_total"] }}</td>
+                                <td style="text-align:right">{{ taskStat["cost_time_total"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ taskStat["cost_total"] }}</b></td>
+                            </tr>
+                        </table>
+                        <div><h3>产品部支撑项目情况：</h3></div>
+                        <table border="2">
+                            <tr style="text-align:left">
+                                <th width="50px">
                                 </th>
-                                <th width="300px">
-                                    <h3>在册人数：<b style="color:#F00">{{ taskStat["persion_count"] }}</b>（人）</h3>
-                                </th>
-                                <th width="300px">
-                                    <h4>占比：<b>{{ taskStat["persion_ratio"] }}</b>%</h4>
-                                    <h5>注：指注册人数占公司在岗人数的比例。</h5>
-                                </th>
-                                <th width="300px">
-                                    <h4>耗时：<b>{{ hrStat["cost_time"] }}</b>（工时）</h4>
-                                    <h4>成本预估：<b style="color:#F00">{{ hrStat["cost"] }}</b>（万元）</h4>
-                                    <h5>注：按人均每月{{ taskStat["cost_base"] }}（万元）计</h5>
-                                </th>
-                                <th width="300px">
-                                    <h4>工作效率：<b>{{ hrStat['ratio'] }}</b>%</h4>
-                                    <h5>注：工作效率 = 任务耗时 / 人员耗时 </h5>
-                                </th>
+                                <th width="300px">类别</th>
+                                <th width="300px">工作量（工时）</th>
+                                <th width="300px">工时成本（万元）</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>项目上（含立项和跟进的）</td>
+                                <td style="text-align:right">{{ hrStat["pd_cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ hrStat["pd_cost"] }}</b></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>非项目上</td>
+                                <td style="text-align:right">{{ hrStat["pd_n_cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ hrStat["pd_n_cost"] }}</b></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b>总计</b></td>
+                                <td style="text-align:right">{{ hrStat["pd_cost_time_total"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ hrStat["pd_cost_total"] }}</b></td>
                             </tr>
                         </table>
                     </li>
                     <li>
                         <h2>任务综合</h2>
                         <hr>
-                        <table>
+                        <table border="2">
                             <tr style="text-align:left">
-                                <th width="20px">
+                                <th width="50px">
                                 </th>
-                                <th width="300px">
-                                    <h3>任务：<b style="color:#F00">{{ taskStat["total"] }}</b>（个）</h3>
-                                </th>
-                                <th width="300px">
-                                    <h4>完成：<b>{{ taskStat["done"] }}</b>（个）</h4>
-                                </th>
-                                <th width="400px">
-                                    <h4>耗时：<b>{{ taskStat["cost_time"] }}</b>（工时）</h4>
-                                    <h4>成本预估：<b style="color:#F00">{{ taskStat["cost"] }}</b>（万元）</h4>
-                                    <h5>注：按人均每月{{ taskStat["cost_base"] }}（万元）计</h5>
-                                </th>
-                                <th width="300px">
-                                    <h4>完成率：<b>{{ taskStat['ratio'] }}</b>%</h4>
-                                </th>
+                                <th width="300px">任务总数</th>
+                                <th width="300px">已完成</th>
+                                <th width="300px">耗时（工时）</th>
+                                <th width="300px">工时成本（万元）</th>
+                                <th width="300px">完成率</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><b style="color:#F00">{{ taskStat["total"] }}</b></td>
+                                <td>{{ taskStat["done"] }}</td>
+                                <td style="text-align:right">{{ taskStat["cost_time"] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ taskStat["cost"] }}</b></td>
+                                <td>{{ taskStat['ratio'] }}%</td>
                             </tr>
                         </table>
                         <table>
                             <tr>
-                                <th width="200px">
-
-                                </th>
-                                <th width="300px">
-                                    {{ persionTask | safe }}
-                                </th>
-                                <th width="200px">
-
-                                </th>
-                                <th width="300px">
-                                    {{ dateTask | safe }}
-                                </th>
+                                <th width="100px"></th>
+                                <th>{{ persionTask | safe }}</th>
+                                <th width="20px"></th>
+                                <th>{{ dateTask | safe }}</th>
                             </tr>
                         </table>
                     </li>
                     <li>
                         <h2>差旅综合</h2>
                         <hr>
-                        <table>
+                        <table border="2">
                             <tr style="text-align:left">
-                                <th width="20px">
-                                </th>
-                                <th width="300px">
-                                    <h3>差旅总数：<b style="color:#F00">{{ tripStat["total"] }}</b>（人次）</h3>
-                                    <h3>总费用：<b style="color:#F00">{{ tripStat["totalcost"] }}</b>（万元）</h3>
-                                </th>
-                                <th width="300px">
-                                    <h4>差旅费（借款）：<b>{{ tripStat["loan"] }}</b>（万元）</h4>
-                                </th>
-                                <th width="300px">
-                                    <h4>机票费：<b>{{ tripStat["ticket"] }}</b>（万元）</h4>
-                                </th>
+                                <th width="50px"></th>
+                                <th width="300px">差旅总次数（人次）</th>
+                                <th width="300px">总费用（万元）</th>
+                                <th width="300px">差旅费借款（万元）</th>
+                                <th width="300px">机票费（万元）</th>
                             </tr>
                             <tr>
-                                <td>
-                                </td>
-                                <td>
-                                    {{ trip | safe }}
-                                </td>
-                                <td>
-                                    {{ planeTicket | safe }}
-                                </td>
-                                <td>
-                                </td>
+                                <td></td>
+                                <td><b style="color:#F00">{{ tripStat["total"] }}</b></td>
+                                <td style="text-align:right"><b style="color:#F00">{{ tripStat["totalcost"] }}</b></td>
+                                <td style="text-align:right">{{ tripStat["loan"] }}</td>
+                                <td style="text-align:right">{{ tripStat["ticket"] }}</td>
+                            </tr>
+                        </table>
+                        <table>
+                            <tr>
+                                <th width="50px"></th>
+                                <th>{{ trip | safe }}</th>
+                                <th width="20px"></th>
+                                <th>{{ planeTicket | safe }}</th>
                             </tr>
                         </table>
                     </li>
                     <li>
                         <h2>考勤综合</h2>
                         <hr>
+                        <table border="2">
+                            <tr style="text-align:left">
+                                <th width="50px"></th>
+                                <th width="300px">到岗人数</th>
+                                <th width="300px">人月工时成本（万元）</th>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{{ checkStat['total'] }}</td>
+                                <td style="text-align:right"><b style="color:#F00">{{ checkStat['cost'] }}</td>
+                            </tr>
+                        </table>
                         <table>
                             <tr>
-                                <th width="300px">
-                                    <h4>到岗：<b style="color:#F00">{{ checkStat['total'] }}</b>（人）</h4>
-                                </th>
-                                <th width="300px">
-                                    {{ chkonam | safe }}
-                                </th>
-                                <th width="300px">
-                                    {{ chkonpm | safe }}
-                                </th>
+                                <th width="50px"></th>
+                                <th>{{ chkonam | safe }}</th>
+                                <th width="8px"></th>
+                                <th>{{ chkonpm | safe }}</th>
+                                <th width="8px"></th>
+                                <th>{{ chkonwork | safe }}</th>
                             </tr>
                         </table>
                     </li>

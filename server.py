@@ -143,20 +143,20 @@ def set_context():
     _today = datetime.date.today()
     _st_date = '2018-01-01'
     _ed_date = _today.strftime("%Y-%m-%d")
-    _checkon_am_data, _checkon_user = handler.getChkOnAm(_st_date, _ed_date)
-    _checkon_pm_data = handler.getChkOnPm(_st_date, _ed_date)
+    _checkon_am_data, _checkon_pm_data, _checkon_work, _checkon_user = handler.getChkOn(_st_date, _ed_date)
 
     # 项目统计信息
-    _pj_count, _pj_ed, _pj_ing = handler.get_pj_state()
+    _pj_count, _pj_op, _pj_ed, _pj_ing = handler.get_pj_state()
     pjStat = {
         "total": _pj_count,
+        "op": _pj_op,
         "done": _pj_ed,
         "ing": _pj_ing,
         "pre": _pj_count-_pj_ing-_pj_ed,
     }
 
     # 产品统计信息
-    _pd_count, _pd_ing = handler.get_pd_state()
+    _pd_count, _pd_ing = handler.get_product_stat()
     pdStat = {
         "total": _pd_count,
         "ing": _pd_ing,
@@ -177,12 +177,22 @@ def set_context():
 
     _persion_cost = _cost/3600
 
+    pd_count, pd_cost, pd_n_cost = handler.get_pd4pj_stat(_st_date, _ed_date)
+
     hrStat = {
         "cost_time": _persion_cost,
-        "cost": "%0.3f" % (float(_persion_cost) * 2.5/26.)
+        "cost": "%0.3f" % (float(_persion_cost) * 2.5/(26. * 8.)),
+        "pd_count": pd_count,
+        "pd_cost_time": pd_cost,
+        "pd_cost": "%0.3f" % (float(pd_cost) * 2.5 / (26. * 8.)),
+        "pd_n_cost_time": pd_n_cost,
+        "pd_n_cost": "%0.3f" % (float(pd_n_cost) * 2.5 / (26. * 8.)),
+        "pd_cost_total": "%0.3f" % (float(pd_cost+pd_n_cost) * 2.5 / (26. * 8.)),
+        "pd_cost_time_total": pd_cost + pd_n_cost,
     }
 
-    count, done_count, persion, date, cost = handler.get_task_stat(_st_date, _ed_date)
+    count, done_count, persion, date, cost, g_stat = handler.get_task_stat(_st_date, _ed_date)
+
     _persion = []
     _persion_max = 0
     for _p in persion:
@@ -206,10 +216,32 @@ def set_context():
         "persion_count": len(persion),
         "persion_ratio": "%0.2f" % (float(len(persion))*100./float(len(_checkon_user))),
         "done": done_count,
-        "cost_time": cost,
+        "cost_time": "%0.3f" % cost,
         "cost_base": "2.5",
-        "cost": "%0.3f" % (float(cost) * 2.5/26.),
+        "cost": "%0.3f" % (float(cost) * 2.5/(26. * 8.)),
         "ratio": "%0.2f" % (float(done_count*100)/float(count)),
+
+        "pd_count": g_stat['pd'][0],
+        "pd_persion": g_stat['pd'][1],
+        "pd_cost_time": "%0.3f" % g_stat['pd'][2],
+        "pd_cost": "%0.3f" % (float(g_stat['pd'][2]) * 2.5 / (26. * 8.)),
+
+        "pj_group": "甘孜、嘉兴、四川公安等",
+        "pj_count": g_stat['pj'][0],
+        "pj_persion": g_stat['pj'][1],
+        "pj_cost_time": "%0.3f" % g_stat['pj'][2],
+        "pj_cost": "%0.3f" % (float(g_stat['pj'][2]) * 2.5 / (26. * 8.)),
+
+        "rdm_count": g_stat['rdm'][0],
+        "rdm_persion": g_stat['rdm'][1],
+        "rdm_cost_time": "%0.3f" % g_stat['rdm'][2],
+        "rdm_cost": "%0.3f" % (float(g_stat['rdm'][2]) * 2.5 / (26. * 8.)),
+
+        "count_total": g_stat['pd'][0]+g_stat['pj'][0]+g_stat['rdm'][0],
+        "persion_total": g_stat['pd'][1]+g_stat['pj'][1]+g_stat['rdm'][1],
+        "cost_time_total": "%0.3f" % (g_stat['pd'][2]+g_stat['pj'][2]+g_stat['rdm'][2]),
+        "cost_total": "%0.3f" % (float(g_stat['pd'][2]+g_stat['pj'][2]+g_stat['rdm'][2]) * 2.5 / (26. * 8.)),
+
     }
 
     _cost_loan = handler.get_loan_stat(_st_date, _ed_date)
@@ -225,7 +257,8 @@ def set_context():
 
     # 考勤信息
     checkStat = {
-        "total": len(_checkon_user)
+        "total": len(_checkon_user),
+        "cost": "%0.2f" % (float(len(_checkon_user))*2.5*4),
     }
 
     context = dict(
@@ -241,6 +274,7 @@ def set_context():
         dateTask=echart_handler.scatter(u'【日期-任务】分布', [0, _persion_max/2], _date),
         chkonam=echart_handler.scatter(u'上班时间分布', [0,12], _checkon_am_data),
         chkonpm=echart_handler.scatter(u'下班时间分布', [8,24], _checkon_pm_data),
+        chkonwork=echart_handler.scatter(u'工作时长分布', [0, 12], _checkon_work),
     )
     return context
 

@@ -34,8 +34,8 @@ def get_geo(title, sub_title, addr_data):
     geo = Geo(title, sub_title,
               title_color="#fff",
               title_pos="center",
-              width=600,
-              height=400,
+              width=500,
+              height=360,
               background_color='#404a59')
 
     attr, value = geo.cast(data)
@@ -68,7 +68,7 @@ def scatter(title, range_def, data):
     # data = [random.randint(0, 100) for _ in range(80)]
     range_color = ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf',
                    '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-    scatter = Scatter(title, width=600, height=300)
+    scatter = Scatter(title, width=400, height=300)
     scatter.add("", range(len(data)), data, visual_range=range_def, is_visualmap=True,
                 visual_range_color=range_color,
                 mark_line=['average'],
