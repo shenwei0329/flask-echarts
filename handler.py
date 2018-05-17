@@ -5,6 +5,10 @@
 #   ================
 #   2018.5.9 @Chengdu
 #
+#   2018.5.16 @成都
+#   1）明确本程序用于建立“公司”最基本的（原始的）信息。
+#   2）后续的分析类数据，通过REST-API方式获取
+#
 #
 
 from __future__ import unicode_literals
@@ -13,6 +17,7 @@ import mongodb_class
 import MySQLdb
 import mysql_hdr
 import types
+import datetime
 
 mongo_db = mongodb_class.mongoDB()
 db = MySQLdb.connect(host="172.16.60.2", user="tk", passwd="53ZkAuoDVc8nsrVG", db="nebula", charset='utf8')
@@ -42,14 +47,103 @@ def get_trip_count(st_date, ed_date):
                                                  }).count()
 
 
+def addr_filter(addr_data, addr_info):
+    """
+    地址合规性处理
+    :parameter addr_data：输出的地址数据
+    :parameter addr_info：地址
+    :return:
+    """
+
+    # 清洗数据，获取出差地址
+    _addr = addr_info.split(' ')
+    if len(_addr) == 1:
+        _addr = addr_info.split(u'、')
+    if len(_addr) == 1:
+        _addr = addr_info.split(';')
+    if len(_addr) == 1:
+        _addr = addr_info.split(u'到')
+    if len(_addr) == 1:
+        _addr = addr_info.split('-')
+    if len(_addr) == 1:
+        _addr = addr_info.split('_')
+    if len(_addr) == 1:
+        _addr = addr_info.split('～')
+    if len(_addr) == 1:
+        _addr = addr_info.split('－')
+    if len(_addr) == 1:
+        _addr = addr_info.split('，')
+    if len(_addr) == 1:
+        _addr = addr_info.split('~')
+    if len(_addr) == 1:
+        _addr = addr_info.split('至')
+    if len(_addr) == 1:
+        _addr = addr_info.split('…')
+    if len(_addr) == 1:
+        _addr = addr_info.split('—')
+    if len(_addr) == 1:
+        if _addr[0] == u'上海嘉兴':
+            _addr = [u"上海", u"嘉兴"]
+        if _addr[0] == u'成都上海':
+            _addr = [u"成都", u"上海"]
+        if _addr[0] == u'成都康定':
+            _addr = [u"成都", u"康定"]
+        if _addr[0] == u'广西南宁':
+            _addr = [u"南宁"]
+        if _addr[0] == u'甘孜康定':
+            _addr = [u"康定"]
+        if _addr[0] == u'甘孜州康定':
+            _addr = [u"康定"]
+        if _addr[0] == u'天津石家庄上海':
+            _addr = [u"天津", u"石家庄", u"上海"]
+        if _addr[0] == u'甘孜州公安局':
+            _addr = [u"康定"]
+
+    for __addr in _addr:
+
+        # 去掉空格信息
+        __addr = __addr.replace(' ', ''). \
+            replace(u'康定', ''). \
+            replace(u'自贡', ''). \
+            replace(u'理塘', ''). \
+            replace(u'北川', ''). \
+            replace(u'深证', '深圳'). \
+            replace(u'甘孜', '康定'). \
+            replace(u'广西南宁', '南宁'). \
+            replace(u'从', ''). \
+            replace(u'治安', ''). \
+            replace(u'办公室', ''). \
+            replace(u'三峡博物馆', ''). \
+            replace(u'最高人民法院', ''). \
+            replace(u'，再', ''). \
+            replace(u'卫士通', ''). \
+            replace(u'联通大厦', ''). \
+            replace(u'四川省公安厅', u'成都'). \
+            replace(u'四川公安厅', u'成都'). \
+            replace(u'市', '')
+        if len(__addr) < 2:
+            continue
+        if (__addr[0] == u'（') or (u'延续' in __addr):
+            continue
+
+        if __addr not in addr_data:
+            addr_data[__addr] = 1
+        else:
+            addr_data[__addr] += 1
+
+    return addr_data
+
+
 def get_trip_data(st_date, ed_date):
     """
     获取差旅数据，在地图上展示。
+    2018.5.16：按月份统计申请人次。
     :param mongo_db: 数据源
     :return:
     """
 
     addr_data = {}
+    _month_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
 
     # 连接ext_system数据库
     mongo_db.connect_db('ext_system')
@@ -58,84 +152,60 @@ def get_trip_data(st_date, ed_date):
     _rec = mongo_db.handler('trip_req', 'find', {u'外出类型': u'出差',
                                                  "$and": [{"审批完成时间": {"$gte": "%s" % st_date}},
                                                           {"审批完成时间": {"$lt": "%s" % ed_date}}]})
+
     for _r in _rec:
 
-        # 清洗数据，获取出差地址
-        _addr = _r[u'起止地点'].split(u'到')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split(' ')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('-')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('_')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('～')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('－')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('，')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('~')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('至')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('…')
-        if len(_addr) == 1:
-            _addr = _r[u'起止地点'].split('—')
-        if len(_addr) == 1:
-            if _addr[0] == u'上海嘉兴':
-                _addr = [u"上海", u"嘉兴"]
-            if _addr[0] == u'成都上海':
-                _addr = [u"成都", u"上海"]
-            if _addr[0] == u'成都康定':
-                _addr = [u"成都", u"康定"]
-            if _addr[0] == u'广西南宁':
-                _addr = [u"南宁"]
-            if _addr[0] == u'甘孜康定':
-                _addr = [u"康定"]
-            if _addr[0] == u'甘孜州康定':
-                _addr = [u"康定"]
-            if _addr[0] == u'天津石家庄上海':
-                _addr = [u"天津", u"石家庄", u"上海"]
-            if _addr[0] == u'甘孜州公安局':
-                _addr = [u"康定"]
-
-        for __addr in _addr:
-
-            # 去掉空格信息
-            __addr = __addr.replace(' ', '').\
-                replace(u'康定', '').\
-                replace(u'自贡', '').\
-                replace(u'理塘', '').\
-                replace(u'北川', '').\
-                replace(u'深证', '深圳').\
-                replace(u'甘孜', '康定').\
-                replace(u'广西南宁', '南宁').\
-                replace(u'从', '').\
-                replace(u'治安', '').\
-                replace(u'办公室', '').\
-                replace(u'三峡博物馆', '').\
-                replace(u'最高人民法院', '').\
-                replace(u'，再', '').\
-                replace(u'卫士通', '').\
-                replace(u'联通大厦', '').\
-                replace(u'四川省公安厅', u'成都').\
-                replace(u'四川公安厅', u'成都').\
-                replace(u'市', '')
-            if len(__addr) < 2:
-                continue
-            if (__addr[0] == u'（') or (u'延续' in __addr):
-                continue
-
-            if __addr not in addr_data:
-                addr_data[__addr] = 1
-            else:
-                addr_data[__addr] += 1
+        addr_data = addr_filter(addr_data, _r[u'起止地点'])
+        _date = datetime.datetime.strptime(_r[u'审批发起时间'], "%Y-%m-%d %H:%M:%S")
+        _month_stat[str(_date.month)] += 1
 
     # 关闭数据库
     mongo_db.close_db()
 
-    return addr_data
+    # print _month_stat
+    _date = []
+    for _d in range(1, 13):
+        _date.append(_month_stat[str(_d)])
+
+    print _date
+
+    return addr_data, _date
+
+
+def get_reim_data(st_date, ed_date):
+    """
+    获取差旅报账，在地图上展示。
+    2018.5.16：按月份统计申请人次。
+    :param mongo_db: 数据源
+    :return:
+    """
+
+    addr_data = {}
+    _month_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
+
+    # 连接ext_system数据库
+    mongo_db.connect_db('ext_system')
+
+    # 从出差申请表中获取出差类型为：出差的数据
+    _rec = mongo_db.handler('reimbursement_req', 'find', {"$and": [{"审批发起时间": {"$gte": "%s" % st_date}},
+                                                                   {"审批发起时间": {"$lt": "%s" % ed_date}}]})
+
+    for _r in _rec:
+        addr_data = addr_filter(addr_data, _r[u'出差起止地点'])
+        _date = datetime.datetime.strptime(_r[u'审批发起时间'], "%Y-%m-%d %H:%M:%S")
+        _month_stat[str(_date.month)] += 1
+
+    # 关闭数据库
+    mongo_db.close_db()
+
+    # print _month_stat
+    _date = []
+    for _d in range(1, 13):
+        _date.append(_month_stat[str(_d)])
+
+    print _date
+
+    return addr_data, _date
 
 
 def calHour(_str):
@@ -189,11 +259,16 @@ def getChkOn(st_date, ed_date):
            ' where str_to_date(KQ_DATE,"%%y-%%m-%%d") between "%s" and "%s"' % (st_date, ed_date)
     _res = mysql_db.do(_sql)
 
+    _total_work_hour = 0.
     _seq_am = ()
     _seq_pm = ()
     _seq_work = ()
     _user = {}
     for _row in _res:
+
+        if _row[2] not in _user:
+            _user[_row[2]] = 0
+
         if (_row[0] == '#') or (_row[1] == '#'):
             continue
         _h = calHour(_row[0])
@@ -210,12 +285,12 @@ def getChkOn(st_date, ed_date):
         else:
             _seq_pm = _seq_pm + (_h1,)
 
-        _seq_work = _seq_work + ((_h1 - _h - 0.5),)
+        _seq_work = _seq_work + ((_h1 - _h - 1.0),)
+        _total_work_hour += (_h1 - _h - 1.0)
 
-        if _row[2] not in _user:
-            _user[_row[2]] = 0
         _user[_row[2]] += 1
-    return _seq_am, _seq_pm, _seq_work, _user
+
+    return _seq_am, _seq_pm, _seq_work, _user, _total_work_hour
 
 
 def get_task_stat(st_date, ed_date):
@@ -310,6 +385,7 @@ def get_task_stat(st_date, ed_date):
 
 def get_hr_stat(st_date, ed_date):
 
+    _month_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
     persion = {}
     date = {}
 
@@ -328,12 +404,21 @@ def get_hr_stat(st_date, ed_date):
                 date[_date] = 0
             date[_date] += 1
 
+            _date = datetime.datetime.strptime(_date, "%Y-%m-%d")
+            _month_stat[str(_date.month)] += 1
+
         mongo_db.close_db()
 
-    return persion, date
+    _date = []
+    for _d in range(1, 13):
+        _date.append(int(_month_stat[str(_d)]))
+
+    return persion, date, _date
 
 
 def get_loan_stat(st_date, ed_date):
+
+    _month_cost_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
 
     mongo_db.connect_db('ext_system')
 
@@ -343,10 +428,42 @@ def get_loan_stat(st_date, ed_date):
     for _r in _rec:
         _cost += float(_r[u'金额小计'])
 
-    return _cost
+        _date = datetime.datetime.strptime(_r[u'审批完成时间'], "%Y-%m-%d %H:%M:%S")
+        _month_cost_stat[str(_date.month)] += float(_r[u'金额小计'])
+
+    _date_cost = []
+    for _d in range(1, 13):
+        _date_cost.append(int(_month_cost_stat[str(_d)]/1000.))
+
+    return _cost, _date_cost
+
+
+def get_reimbursement_stat(st_date, ed_date):
+
+    _month_cost_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
+
+    mongo_db.connect_db('ext_system')
+
+    _rec = mongo_db.handler('reimbursement_req', 'find', {"$and": [{"审批发起时间": {"$gte": "%s" % st_date}},
+                                                                   {"审批发起时间": {"$lt": "%s" % ed_date}}]})
+    _cost = 0.
+    for _r in _rec:
+        _cost += float(_r[u'金额小计'])
+
+        _date = datetime.datetime.strptime(_r[u'审批发起时间'], "%Y-%m-%d %H:%M:%S")
+        _month_cost_stat[str(_date.month)] += float(_r[u'金额小计'])
+
+    _date_cost = []
+    for _d in range(1, 13):
+        _date_cost.append(int(_month_cost_stat[str(_d)]/1000.))
+
+    return _cost, _date_cost
 
 
 def get_ticket_stat(st_date, ed_date):
+
+    _month_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
+    _month_cost_stat = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0, "11": 0, "12": 0}
 
     mongo_db.connect_db('ext_system')
 
@@ -378,10 +495,25 @@ def get_ticket_stat(st_date, ed_date):
             else:
                 addr_data[__addr] += 1
 
+        _date = datetime.datetime.strptime(_r[u'起飞时间'].replace(u'年', '-').replace(u'月', '-').replace(u'日', ""),
+                                           u'%Y-%m-%d')
+        _month_stat[str(_date.month)] += 1
+        _month_cost_stat[str(_date.month)] += float(_r[u'实收'])
+
     # 关闭数据库
     mongo_db.close_db()
 
-    return _cost, addr_data
+    _date = []
+    for _d in range(1, 13):
+        _date.append(int(_month_stat[str(_d)]))
+
+    _date_cost = []
+    for _d in range(1, 13):
+        _date_cost.append(int(_month_cost_stat[str(_d)]/1000.))
+
+    print _date, _date_cost
+
+    return _cost, addr_data, _date, _date_cost
 
 
 def is_pj(pj_info, summary):
@@ -453,7 +585,47 @@ def get_product_stat():
     products = mongo_db.handler('pd_shelves_t', 'find', {})
     _ed_count = products.count()
 
+    _count = []
+    _addr = []
+    products = mongo_db.handler('pd_deliver_t', 'find', {})
+    for pd in products:
+        if pd[u'安装地址'] not in _addr:
+            _addr.append(pd[u'安装地址'])
+        if pd[u'产品代号']+pd[u'版本'] not in _count:
+            _count.append(pd[u'产品代号']+pd[u'版本'])
+
     mongo_db.close_db()
 
-    return _ed_count, _ing_count
+    return _ed_count, _ing_count, len(_addr), len(_count)
 
+
+def get_contract_stat():
+
+    mongo_db.connect_db('ext_system')
+    contracts = mongo_db.handler('contract_t', 'find', {})
+
+    _count = contracts.count()
+    _total = 0.
+    for _r in contracts:
+        if len(_r[u'金额']) > 0:
+            _total += float(_r[u'金额'])
+
+    return _count, _total
+
+
+def get_budget_stat():
+
+    mongo_db.connect_db('ext_system')
+    enginerrings = mongo_db.handler('enginerring_budget', 'find', {})
+
+    _total = {}
+    _all = 0.
+    for _r in enginerrings:
+        if _r[u'项目编号'] not in _total:
+            _total[u'项目编号'] = 0.
+
+        if _r[u'金额'].replace(".", "").isdigit():
+            _total[u'项目编号'] += float(_r[u'金额'])
+            _all += float(_r[u'金额'])
+
+    return _all, _total

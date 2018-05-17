@@ -34,8 +34,8 @@ def get_geo(title, sub_title, addr_data):
     geo = Geo(title, sub_title,
               title_color="#fff",
               title_pos="center",
-              width=500,
-              height=360,
+              width=400,
+              height=320,
               background_color='#404a59')
 
     attr, value = geo.cast(data)
@@ -48,16 +48,21 @@ def get_geo(title, sub_title, addr_data):
     return geo.render_embed()
 
 
-def bar():
+def bar(title, attr, datas):
     from pyecharts import Bar
 
     # bar
-    attr = ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"]
-    v1 = [5, 20, 36, 10, 75, 90]
-    v2 = [10, 25, 8, 60, 20, 80]
-    bar = Bar("柱状图数据堆叠示例")
-    bar.add("商家A", attr, v1, is_stack=False, mark_line=['average'], mark_point=['max', 'min'])
-    bar.add("商家B", attr, v2, is_stack=False, mark_line=['average'], mark_point=['max', 'min'])
+    # attr = ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"]
+    # v1 = [5, 20, 36, 10, 75, 90]
+    # v2 = [10, 25, 8, 60, 20, 80]
+    bar = Bar(title,
+              width=400,
+              height=300,
+              background_color='#b0bab9',
+              )
+    for _d in datas:
+        bar.add(_d['title'], attr, _d['data'], is_stack=False, mark_line=['average'], mark_point=['max', 'min'])
+
     return bar.render_embed()
 
 
@@ -68,8 +73,14 @@ def scatter(title, range_def, data):
     # data = [random.randint(0, 100) for _ in range(80)]
     range_color = ['#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf',
                    '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
-    scatter = Scatter(title, width=400, height=300)
-    scatter.add("", range(len(data)), data, visual_range=range_def, is_visualmap=True,
+    scatter = Scatter(title,
+                      width=400,
+                      height=300,
+                      background_color='#b0bab9',
+                      )
+    scatter.add("", range(len(data)), data,
+                visual_range=range_def,
+                is_visualmap=True,
                 visual_range_color=range_color,
                 mark_line=['average'],
                 mark_point=['max', 'min'])

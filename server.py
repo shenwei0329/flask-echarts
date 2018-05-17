@@ -35,6 +35,7 @@ logger.addHandler(_handler)
 logger.addHandler(console)
 
 databases = ['CPSJ', 'FAST', 'HUBBLE', 'ROOOOT', 'RDM', 'TESTCENTER', 'JX', 'GZ']
+month = [u'一月', u'二月', u'三月', u'四月', u'五月', u'六月', u'七月', u'八月', u'九月', u'十月', u'十一月', u'十二月']
 
 
 class User():
@@ -143,7 +144,11 @@ def set_context():
     _today = datetime.date.today()
     _st_date = '2018-01-01'
     _ed_date = _today.strftime("%Y-%m-%d")
-    _checkon_am_data, _checkon_pm_data, _checkon_work, _checkon_user = handler.getChkOn(_st_date, _ed_date)
+    _checkon_am_data, _checkon_pm_data, _checkon_work, _checkon_user, _total_work_hour = handler.getChkOn(_st_date, _ed_date)
+    _act_user = 0
+    for _v in _checkon_user:
+        if _checkon_user[_v] > 0:
+            _act_user += 1
 
     # 项目统计信息
     _pj_count, _pj_op, _pj_ed, _pj_ing = handler.get_pj_state()
@@ -154,12 +159,22 @@ def set_context():
         "ing": _pj_ing,
         "pre": _pj_count-_pj_ing-_pj_ed,
     }
+    _contract_count, _contract_total = handler.get_contract_stat()
+    _budget, _budget_list = handler.get_budget_stat()
+    contractStat = {
+        "count": _contract_count,
+        "total": "%0.3f" % _contract_total,
+        "budget": "%0.3f" % (_budget / 10000.),
+        "budgeted": 0,
+    }
 
     # 产品统计信息
-    _pd_count, _pd_ing = handler.get_product_stat()
+    _pd_count, _pd_ing, _deliver, _deliver_count = handler.get_product_stat()
     pdStat = {
         "total": _pd_count,
         "ing": _pd_ing,
+        "deliver": _deliver,
+        "count": _deliver_count,
     }
 
     _date_scale = pd.date_range(start='2018-01-01 00:00:00',
@@ -170,7 +185,7 @@ def set_context():
     _date_scale = pd.Series(date_only_array)
 
     # 资源统计信息
-    persion, date = handler.get_hr_stat(_st_date, _ed_date)
+    persion, date, _hr_month_date = handler.get_hr_stat(_st_date, _ed_date)
     _cost = 0
     for _p in persion:
         _cost += persion[_p]
@@ -208,13 +223,14 @@ def set_context():
         else:
             _date.append(0)
 
-    hrStat['ratio'] = "%0.2f" % (float(cost)*100./float(_persion_cost))
+    _ration = (float(len(persion))/float(_act_user))
+    hrStat['ratio'] = "%0.2f" % (float(cost)*100./(_total_work_hour*_ration))
 
     # 任务统计
     taskStat = {
         "total": count,
         "persion_count": len(persion),
-        "persion_ratio": "%0.2f" % (float(len(persion))*100./float(len(_checkon_user))),
+        "persion_ratio": "%0.2f" % (float(len(persion)*100)/float(_act_user)),
         "done": done_count,
         "cost_time": "%0.3f" % cost,
         "cost_base": "2.5",
@@ -244,32 +260,52 @@ def set_context():
 
     }
 
-    _cost_loan = handler.get_loan_stat(_st_date, _ed_date)
-    _cost_ticket, _addr_data = handler.get_ticket_stat(_st_date, _ed_date)
-    _trip_addr_data = handler.get_trip_data(_st_date, _ed_date)
+    _cost_loan, _trip_month_cost = handler.get_loan_stat(_st_date, _ed_date)
+    _cost_reim, _reim_month_cost = handler.get_reimbursement_stat(_st_date, _ed_date)
+    _cost_ticket, _addr_data, _month_date, _month_cost = handler.get_ticket_stat(_st_date, _ed_date)
+    _trip_addr_data, _trip_month_data = handler.get_trip_data(_st_date, _ed_date)
+    _reim_addr_data, _reim_month_data = handler.get_reim_data(_st_date, _ed_date)
     # 差旅统计信息
     tripStat = {
         "total": handler.get_trip_count(_st_date, _ed_date),
         "loan": "%0.3f" % (_cost_loan/10000.),
-        "ticket": "%0.3f" % (_cost_ticket/ 10000.),
+        "reim": "%0.3f" % (_cost_reim/10000.),
+        "ticket": "%0.3f" % (_cost_ticket/10000.),
         "totalcost": "%0.3f" % ((_cost_loan+_cost_ticket)/10000.)
     }
 
     # 考勤信息
     checkStat = {
         "total": len(_checkon_user),
-        "cost": "%0.2f" % (float(len(_checkon_user))*2.5*4),
+        "ratio": "%0.2f" % (float(_act_user)*100./len(_checkon_user)),
+        "actUser": _act_user,
+        "workHour": _total_work_hour,
+        "workHourCost": "%0.2f" % (_total_work_hour*2.5/(26.*8.)),
     }
 
     context = dict(
+        report={"started_at": _st_date, "ended_at": _ed_date},
+        user={"role": "admin"},
         pjStat=pjStat,
+        contractStat=contractStat,
         pdStat=pdStat,
         hrStat=hrStat,
         taskStat=taskStat,
         tripStat=tripStat,
         checkStat=checkStat,
-        planeTicket=echart_handler.get_geo(u"航程信息", u"数据来源于携程", _addr_data),
-        trip=echart_handler.get_geo(u"差旅信息", u"信息来源于出差申请", _trip_addr_data),
+        planeTicket=echart_handler.get_geo(u"航程", u"数据来源于携程", _addr_data),
+        hrMonth=echart_handler.bar(u'任务分布', month, [{'title': u'个数', 'data': _hr_month_date}]),
+        tripMonth=echart_handler.bar(u'申请分布', month,
+                                     [{'title': u'人次', 'data': _trip_month_data},
+                                      {'title': u'借款金额（1000元）', 'data': _trip_month_cost}]),
+        reimMonth=echart_handler.bar(u'报账分布', month,
+                                     [{'title': u'人次', 'data': _reim_month_data},
+                                      {'title': u'报账金额（1000元）', 'data': _reim_month_cost}]),
+        planeMonth=echart_handler.bar(u'航程分布', month,
+                                      [{'title': u'航次', 'data': _month_date},
+                                       {'title': u'金额（1000元）', 'data': _month_cost}]),
+        trip=echart_handler.get_geo(u"借款", u"信息来源于出差申请", _trip_addr_data),
+        reim=echart_handler.get_geo(u"报账", u"信息来源于差旅报账申请", _reim_addr_data),
         persionTask=echart_handler.scatter(u'【人-任务】分布', [0, _persion_max/2], _persion),
         dateTask=echart_handler.scatter(u'【日期-任务】分布', [0, _persion_max/2], _date),
         chkonam=echart_handler.scatter(u'上班时间分布', [0,12], _checkon_am_data),
